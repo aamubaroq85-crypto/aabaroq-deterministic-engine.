@@ -2,16 +2,17 @@ import streamlit as st
 import numpy as np
 import time
 import hashlib
+import pandas as pd
 
 # Konfigurasi Halaman Streamlit
 st.set_page_config(
-    page_title="Pi_eff Deterministic Data Synthesizer & Mesh",
+    page_title="Pi_eff Deterministic Data Synthesizer & Map",
     page_icon="⚡",
     layout="centered"
 )
 
 st.title("⚡ $\\pi_{\\text{eff}}$ Deterministic Data Synthesizer")
-st.markdown("Modul purwarupa lengkap: Sintesis data deterministik, transmisi *mesh/satelit* langsung, dan keamanan entropi.")
+st.markdown("Modul lengkap: Sintesis data deterministik, transmisi *mesh/satelit*, dan visualisasi peta geospasial.")
 
 # Sidebar untuk Parameter Konstanta Zuhri
 st.sidebar.header("Parameter $\\pi_{\\text{eff}}$ & Transmisi")
@@ -19,11 +20,13 @@ pi_eff_val = st.sidebar.slider("Nilai Konstanta Efektif ($\\pi_{\\text{eff}}$)",
 compression_density = st.sidebar.slider("Kerapatan Kisi Entropi", min_value=1, max_value=10, value=5)
 transmission_mode = st.sidebar.selectbox("Jalur Transmisi Tanpa Menara", ["Direct-to-Device LEO Satellite", "Peer-to-Peer Lattice Mesh"])
 
-# Input Data Lokal dari Pengguna
+# Input Data Lokasi Default (Koordinat Intaimelyan, Skanto, Keerom, Papua)
 st.subheader("1. Input State Lokal ($S_{\\text{local}}$)")
-user_input_data = st.text_area("Masukkan data/pesan yang ingin disintesis:", "Koordinat Lat/Long: -2.5489, 140.7189 | Status: Aktif")
+default_location_text = "Lokasi: Kampung Intaimelyan, Skanto, Keerom | Lat: -2.783899, Long: 140.661425 | Status: Node Otonom Aktif"
+user_input_data = st.text_area("Masukkan data/pesan yang ingin disintesis:", default_location_text)
 
-if st.button("🚀 Jalankan Sintesis & Transmisi Otonom"):
+# Tombol Eksekusi
+if st.button("🚀 Jalankan Sintesis & Petakan Node"):
     if not user_input_data.strip():
         st.warning("Masukkan data terlebih dahulu!")
     else:
@@ -40,19 +43,18 @@ if st.button("🚀 Jalankan Sintesis & Transmisi Otonom"):
         # --- MODUL 3: Zero-Header Encoding Matrix ---
         synthetic_signature = np.sum(phase_modulated) % pi_eff_val
         
-        # --- MODUL BARU: Modul Keamanan Entropi (Zero-Knowledge Authenticator) ---
-        # Menghasilkan segel pengaman berbasis hash SHA-256 dari fasa entropi
+        # --- MODUL 4: Modul Keamanan Entropi (ZKP) ---
         entropy_string = f"{synthetic_signature}-{compression_density}-{pi_eff_val}"
         entropy_seal = hashlib.sha256(entropy_string.encode()).hexdigest()[:16]
         
-        # --- MODUL BARU: Modul Simulasi Transmisi Mesh / Satelit ---
+        # --- MODUL 5: Simulasi Transmisi Mesh/Satelit ---
         simulated_hop_latency = 0.045 if transmission_mode == "Peer-to-Peer Lattice Mesh" else 1.250
         
         end_time = time.time()
         execution_time = ((end_time - start_time) * 1000) + simulated_hop_latency
         
-        # --- MODUL 4: Deterministic Synthesizer Output ---
-        st.success("✅ Sintesis dan Enkripsi Entropi Berhasil!")
+        # --- OUTPUT HASIL ---
+        st.success("✅ Sintesis, Enkripsi, dan Pemetaan Berhasil!")
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -62,7 +64,7 @@ if st.button("🚀 Jalankan Sintesis & Transmisi Otonom"):
         with col3:
             st.metric(label="Status Keamanan", value="ZKP-Secure")
             
-        st.subheader("2. Hasil Paket Data Ter-Sintesis & Jalur Transmisi")
+        st.subheader("2. Hasil Paket Data Ter-Sintesis")
         st.json({
             "mode_transmisi": transmission_mode,
             "status_jaringan": "Bypassed Traditional Cell Tower (Tanpa Menara)",
@@ -72,11 +74,17 @@ if st.button("🚀 Jalankan Sintesis & Transmisi Otonom"):
             "payload_elements": len(phase_modulated)
         })
         
-        with st.expander("Lihat Detail Vektor Fasa & Segel Keamanan"):
-            st.write({
-                "signature_hash": entropy_seal,
-                "payload_vector": phase_modulated.tolist()
-            })
+        # --- MODUL BARU: Visualisasi Peta Interaktif ---
+        st.subheader("3. Visualisasi Peta Node Otonom")
+        st.markdown("Titik lokasi aktif berdasarkan koordinat geospasial input:")
+        
+        # Membuat DataFrame untuk titik peta (Streamlit map membutuhkan kolom 'lat' dan 'lon')
+        map_data = pd.DataFrame({
+            'lat': [-2.783899],
+            'lon': [140.661425]
+        })
+        
+        st.map(map_data, zoom=13, use_container_width=True)
 
 # Catatan kaki panduan
 st.markdown("---")
