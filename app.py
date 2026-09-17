@@ -3,16 +3,17 @@ import numpy as np
 import time
 import hashlib
 import pandas as pd
+import pydeck as pdk
 
 # Konfigurasi Halaman Streamlit
 st.set_page_config(
-    page_title="Pi_eff Deterministic Data Synthesizer & Map",
+    page_title="Pi_eff Deterministic Data Synthesizer & Satellite Map",
     page_icon="⚡",
     layout="centered"
 )
 
 st.title("⚡ $\\pi_{\\text{eff}}$ Deterministic Data Synthesizer")
-st.markdown("Modul lengkap: Sintesis data deterministik, transmisi *mesh/satelit*, dan visualisasi peta geospasial.")
+st.markdown("Modul lengkap: Sintesis data deterministik, transmisi *mesh/satelit*, dan visualisasi citra satelit geospasial.")
 
 # Sidebar untuk Parameter Konstanta Zuhri
 st.sidebar.header("Parameter $\\pi_{\\text{eff}}$ & Transmisi")
@@ -26,7 +27,7 @@ default_location_text = "Lokasi: Kampung Intaimelyan, Skanto, Keerom | Lat: -2.7
 user_input_data = st.text_area("Masukkan data/pesan yang ingin disintesis:", default_location_text)
 
 # Tombol Eksekusi
-if st.button("🚀 Jalankan Sintesis & Petakan Node"):
+if st.button("🚀 Jalankan Sintesis & Petakan Citra Satelit"):
     if not user_input_data.strip():
         st.warning("Masukkan data terlebih dahulu!")
     else:
@@ -54,7 +55,7 @@ if st.button("🚀 Jalankan Sintesis & Petakan Node"):
         execution_time = ((end_time - start_time) * 1000) + simulated_hop_latency
         
         # --- OUTPUT HASIL ---
-        st.success("✅ Sintesis, Enkripsi, dan Pemetaan Berhasil!")
+        st.success("✅ Sintesis, Enkripsi, dan Render Satelit Berhasil!")
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -74,17 +75,41 @@ if st.button("🚀 Jalankan Sintesis & Petakan Node"):
             "payload_elements": len(phase_modulated)
         })
         
-        # --- MODUL BARU: Visualisasi Peta Interaktif ---
-        st.subheader("3. Visualisasi Peta Node Otonom")
-        st.markdown("Titik lokasi aktif berdasarkan koordinat geospasial input:")
+        # --- MODUL VISUALISASI CITRA SATELIT (PyDeck) ---
+        st.subheader("3. Visualisasi Citra Satelit Node Otonom")
+        st.markdown("Tampilan peta berbasis foto citra satelit asli bumi di titik koordinat Anda:")
         
-        # Membuat DataFrame untuk titik peta (Streamlit map membutuhkan kolom 'lat' dan 'lon')
-        map_data = pd.DataFrame({
-            'lat': [-2.783899],
-            'lon': [140.661425]
+        # Data koordinat target
+        target_lat = -2.783899
+        target_lon = 140.661425
+        
+        chart_data = pd.DataFrame({
+            'lat': [target_lat],
+            'lon': [target_lon],
+            'name': ['Node Otonom Intaimelyan']
         })
         
-        st.map(map_data, zoom=13, use_container_width=True)
+        # Menggunakan PyDeck dengan peta gaya satelit (Mapbox Satellite Style)
+        st.pydeck_chart(pdk.Deck(
+            map_style='mapbox://styles/mapbox/satellite-v9',
+            initial_view_state=pdk.ViewState(
+                latitude=target_lat,
+                longitude=target_lon,
+                zoom=15,
+                pitch=45,
+            ),
+            layers=[
+                pdk.Layer(
+                    'ScatterplotLayer',
+                    data=chart_data,
+                    get_position='[lon, lat]',
+                    get_color='[255, 69, 0, 200]',
+                    get_radius=30,
+                    pickable=True,
+                ),
+            ],
+            tooltip={"text": "{name}\nLat: {lat}\nLon: {lon}"}
+        ))
 
 # Catatan kaki panduan
 st.markdown("---")
